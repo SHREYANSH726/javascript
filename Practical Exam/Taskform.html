@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input, textarea, select, button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #fff;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        li button {
+            width: auto;
+            margin: 5px;
+            background: #dc3545;
+        }
+        li button:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Manager</h1>
+        <form id="taskForm">
+            <input type="text" id="title" placeholder="Task Title" required>
+            <textarea id="description" placeholder="Task Description"></textarea>
+            <input type="date" id="dueDate" required>
+            <select id="priority">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+            <button type="submit">Add Task</button>
+        </form>
+        
+        <div>
+            <label for="filter">Filter:</label>
+            <select id="filter">
+                <option value="all">All</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+            <input type="text" id="search" placeholder="Search">
+        </div>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", displayTasks);
+        document.getElementById("taskForm").addEventListener("submit", addTask);
+        document.getElementById("filter").addEventListener("change", displayTasks);
+        document.getElementById("search").addEventListener("input", displayTasks);
+
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+        function addTask(event) {
+            event.preventDefault();
+            const title = document.getElementById("title").value;
+            const description = document.getElementById("description").value;
+            const dueDate = document.getElementById("dueDate").value;
+            const priority = document.getElementById("priority").value;
+            
+            if (!title || !dueDate) {
+                alert("Title and Due Date required!");
+                return;
+            }
+            
+            tasks.push({ id: Date.now(), title, description, dueDate, priority });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            document.getElementById("taskForm").reset();
+            displayTasks();
+        }
+
+        function displayTasks() {
+            const taskList = document.getElementById("taskList");
+            taskList.innerHTML = "";
+            const filter = document.getElementById("filter").value;
+            const search = document.getElementById("search").value.toLowerCase();
+            
+            tasks.filter(task =>
+                (filter === "all" || task.priority === filter) &&
+                (task.title.toLowerCase().includes(search) || task.description.toLowerCase().includes(search))
+            ).forEach(task => {
+                taskList.innerHTML += `<li><strong>${task.title}</strong> - ${task.description} <br>
+                Due: ${task.dueDate} | ${task.priority} 
+                <button onclick="editTask(${task.id})">Edit</button>
+                <button onclick="deleteTask(${task.id})">Delete</button></li>`;
+            });
+        }
+
+        function editTask(id) {
+            let task = tasks.find(t => t.id === id);
+            document.getElementById("title").value = task.title;
+            document.getElementById("description").value = task.description;
+            document.getElementById("dueDate").value = task.dueDate;
+            document.getElementById("priority").value = task.priority;
+            tasks = tasks.filter(t => t.id !== id);
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            displayTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            displayTasks();
+        }
+    </script>
+</body>
+</html>
